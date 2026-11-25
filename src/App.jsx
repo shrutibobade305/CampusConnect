@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Home,
   CalendarDays,
@@ -16,6 +16,12 @@ import {
   CheckCircle,
   AlertCircle,
   GraduationCap,
+  Sparkles,
+  MessageSquare,
+  Send,
+  X,
+  RotateCcw,
+  Bot,
 } from "lucide-react";
 
 /* =========================
@@ -74,6 +80,56 @@ const eventsData = [
     emoji: "🏆",
     description:
       "Join the campus sports tournament and compete with your fellow students.",
+  },
+];
+
+/* =========================
+   TODAY'S SCHEDULE DATA (MY DAY)
+========================= */
+const todaySchedule = [
+  {
+    id: 1,
+    time: "09:00 AM",
+    subject: "Data Structures",
+    room: "Room 204",
+    faculty: "Prof. Sharma",
+    color: "blue",
+    status: "completed",
+    statusLabel: "Completed",
+  },
+  {
+    id: 2,
+    time: "11:00 AM",
+    timeWindow: "11:00 AM – 12:30 PM",
+    subject: "Database Management",
+    room: "Lab 3",
+    faculty: "Prof. Patil",
+    color: "purple",
+    status: "upcoming",
+    statusLabel: "Up Next",
+    isNext: true,
+    badge: "Next class",
+    countdown: "Starting soon",
+  },
+  {
+    id: 3,
+    time: "01:30 PM",
+    subject: "Operating Systems",
+    room: "Room 108",
+    faculty: "Prof. Deshmukh",
+    color: "orange",
+    status: "later",
+    statusLabel: "Later",
+  },
+  {
+    id: 4,
+    time: "03:00 PM",
+    subject: "Web Development",
+    room: "Lab 2",
+    faculty: "Prof. Kulkarni",
+    color: "green",
+    status: "later",
+    statusLabel: "Later",
   },
 ];
 
@@ -368,9 +424,230 @@ function EventsPage({ registeredEvents, toggleRegistration }) {
 }
 
 /* =========================
+   SMART ATTENDANCE INSIGHTS
+========================= */
+function SmartAttendanceInsights({ setActivePage }) {
+  const TARGET_PERCENT = 75;
+
+  const totalAttended = attendanceData.reduce(
+    (sum, subject) => sum + subject.attended,
+    0
+  );
+
+  const totalClasses = attendanceData.reduce(
+    (sum, subject) => sum + subject.total,
+    0
+  );
+
+  const overallPercentage = Math.round(
+    (totalAttended / totalClasses) * 100
+  );
+
+  const isOverallSafe = overallPercentage >= TARGET_PERCENT;
+
+  // Calculate dynamic insights for each subject
+  const subjectInsights = attendanceData.map((subject) => {
+    const percentage = Math.round((subject.attended / subject.total) * 100);
+    const isSafe = percentage >= TARGET_PERCENT;
+
+    // Consecutive classes needed to reach 75%:
+    // (A + x) / (T + x) >= 0.75  =>  x >= 3T - 4A
+    const classesNeeded = isSafe
+      ? 0
+      : Math.max(1, Math.ceil(3 * subject.total - 4 * subject.attended));
+
+    // Classes student can miss while staying >= 75%:
+    // A / (T + m) >= 0.75  =>  m <= (4A - 3T) / 3
+    const canMiss = isSafe
+      ? Math.max(0, Math.floor((4 * subject.attended - 3 * subject.total) / 3))
+      : 0;
+
+    return {
+      ...subject,
+      percentage,
+      isSafe,
+      classesNeeded,
+      canMiss,
+    };
+  });
+
+  const atRiskCount = subjectInsights.filter((s) => !s.isSafe).length;
+  const safeCount = subjectInsights.filter((s) => s.isSafe).length;
+
+  return (
+    <section className="panel smart-insights-panel">
+      <div className="insights-header">
+        <div className="insights-header-left">
+          <div className="insights-icon-box">
+            <Sparkles size={20} />
+          </div>
+          <div>
+            <div className="insights-title-row">
+              <h2>Smart Attendance Insights</h2>
+              <span className="insights-target-pill">Target: {TARGET_PERCENT}% Min</span>
+            </div>
+            <p className="insights-subtitle">
+              Dynamic semester target forecasting & subject-wise risk analysis
+            </p>
+          </div>
+        </div>
+
+        <div className={`insights-status-pill ${isOverallSafe ? "safe" : "risk"}`}>
+          {isOverallSafe ? <CheckCircle size={15} /> : <AlertCircle size={15} />}
+          <span>Overall: {isOverallSafe ? "Safe" : "At Risk"} ({overallPercentage}%)</span>
+        </div>
+      </div>
+
+      {/* OVERALL TARGET PROGRESS & SUMMARY */}
+      <div className="insights-overall-banner">
+        <div className="insights-gauge-section">
+          <div className="gauge-labels">
+            <span className="gauge-title">Overall Semester Attendance</span>
+            <span className={`gauge-value ${isOverallSafe ? "safe-text" : "risk-text"}`}>
+              {overallPercentage}%
+            </span>
+          </div>
+
+          <div className="target-progress-wrapper">
+            <div className="target-progress-track">
+              <div
+                className={`target-progress-bar ${isOverallSafe ? "safe-bar" : "risk-bar"}`}
+                style={{ width: `${Math.min(overallPercentage, 100)}%` }}
+              />
+              <div className="target-marker" style={{ left: `${TARGET_PERCENT}%` }}>
+                <span className="target-marker-label">75% Target</span>
+              </div>
+            </div>
+          </div>
+
+          <p className="insights-friendly-msg">
+            {isOverallSafe
+              ? atRiskCount === 0
+                ? "You're on track! Keep it up. All subjects are above the 75% minimum."
+                : `You're on track overall! However, ${atRiskCount} ${
+                    atRiskCount === 1 ? "subject needs" : "subjects need"
+                  } your attention.`
+              : "Your attendance needs attention. You are currently below the 75% minimum required attendance."}
+          </p>
+        </div>
+
+        <div className="insights-summary-chips">
+          <div className="summary-chip">
+            <span className="chip-label">Subjects Status</span>
+            <strong>
+              <span className="chip-count safe-text">{safeCount} Safe</span>
+              {atRiskCount > 0 && (
+                <span className="chip-count risk-text"> · {atRiskCount} At Risk</span>
+              )}
+            </strong>
+          </div>
+          <div className="summary-chip">
+            <span className="chip-label">Semester Requirement</span>
+            <strong>75% Minimum Attendance</strong>
+          </div>
+        </div>
+      </div>
+
+      {/* SUBJECT BREAKDOWN & DYNAMIC ACTIONS */}
+      <div className="insights-subjects-title">
+        <div>
+          <h3>Subject Breakdown & Required Actions</h3>
+          <p>Calculated dynamically from your actual class attendance records</p>
+        </div>
+      </div>
+
+      <div className="insights-subjects-grid">
+        {subjectInsights.map((subj) => (
+          <div
+            key={subj.subject}
+            className={`insight-subject-card ${subj.isSafe ? "card-safe" : "card-risk"}`}
+          >
+            <div className="insight-card-top">
+              <div className="subject-title-area">
+                <span className="subject-color-dot" style={{ background: subj.color }} />
+                <strong>{subj.subject}</strong>
+              </div>
+              <span className={`status-tag ${subj.isSafe ? "tag-safe" : "tag-risk"}`}>
+                {subj.isSafe ? (
+                  <>
+                    <CheckCircle size={12} /> Safe
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle size={12} /> At Risk
+                  </>
+                )}
+              </span>
+            </div>
+
+            <div className="insight-stats-row">
+              <span className="subject-classes-count">
+                {subj.attended} of {subj.total} classes attended
+              </span>
+              <strong className={`subject-pct ${subj.isSafe ? "safe-text" : "risk-text"}`}>
+                {subj.percentage}%
+              </strong>
+            </div>
+
+            {/* Visual target indicator with 75% line */}
+            <div className="subj-progress-wrap">
+              <div className="subj-progress-track">
+                <div
+                  className={`subj-progress-fill ${subj.isSafe ? "safe-fill" : "risk-fill"}`}
+                  style={{
+                    width: `${Math.min(subj.percentage, 100)}%`,
+                    background: subj.isSafe ? subj.color : undefined,
+                  }}
+                />
+                <div className="subj-target-line" style={{ left: "75%" }} title="75% Target" />
+              </div>
+            </div>
+
+            {/* Friendly Dynamic Advice Message */}
+            <div className={`insight-message-box ${subj.isSafe ? "msg-safe" : "msg-risk"}`}>
+              {subj.isSafe ? (
+                <>
+                  <CheckCircle size={14} className="msg-icon" />
+                  <span>
+                    {subj.canMiss > 0
+                      ? `Can miss up to ${subj.canMiss} ${
+                          subj.canMiss === 1 ? "class" : "classes"
+                        } while staying at or above 75%.`
+                      : "Right at the 75% boundary. Attend upcoming classes to remain safe."}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle size={14} className="msg-icon" />
+                  <span>
+                    Your attendance needs attention. Attend the next{" "}
+                    <strong>{subj.classesNeeded}</strong> consecutive{" "}
+                    {subj.classesNeeded === 1 ? "class" : "classes"} to reach 75%.
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="insights-footer">
+        <button
+          className="insights-view-link"
+          onClick={() => setActivePage("Attendance")}
+        >
+          <span>View full attendance records</span>
+          <ArrowRight size={14} />
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/* =========================
    HOME DASHBOARD
 ========================= */
-function HomePage({ setActivePage }) {
+function HomePage({ setActivePage, paymentMessage }) {
   const totalAttended = attendanceData.reduce(
     (sum, subject) => sum + subject.attended,
     0
@@ -389,6 +666,20 @@ function HomePage({ setActivePage }) {
     (sum, fee) => sum + fee.amount,
     0
   );
+
+  // Dynamic date formatting for My Day
+  const todayFormatted = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  // Data-driven next upcoming class
+  const nextClass =
+    todaySchedule.find((cls) => cls.isNext) ||
+    todaySchedule.find((cls) => cls.status === "upcoming") ||
+    todaySchedule[0];
 
   return (
     <div className="page-section">
@@ -455,12 +746,22 @@ function HomePage({ setActivePage }) {
         </div>
       </div>
 
+      {/* SMART ATTENDANCE INSIGHTS */}
+      <SmartAttendanceInsights setActivePage={setActivePage} />
+
       <div className="content-grid">
-        <section className="panel schedule-panel">
-          <div className="panel-heading">
+        {/* MY DAY: INTEGRATED SCHEDULE, NEXT CLASS SPOTLIGHT & REMINDERS */}
+        <section className="panel my-day-panel">
+          <div className="panel-heading my-day-heading">
             <div>
-              <h2>Today's Schedule</h2>
-              <p>Your classes for today</p>
+              <div className="my-day-title-row">
+                <h2>My Day</h2>
+                <span className="my-day-date-badge">
+                  <CalendarDays size={13} />
+                  {todayFormatted}
+                </span>
+              </div>
+              <p>Your schedule, next class & daily highlights</p>
             </div>
             <button
               className="timetable-link"
@@ -471,44 +772,163 @@ function HomePage({ setActivePage }) {
             </button>
           </div>
 
-          <div className="schedule-item">
-            <div className="time">09:00 AM</div>
-            <div className="class-color blue" />
-            <div className="class-details">
-              <strong>Data Structures</strong>
-              <span>Room 204 · Prof. Sharma</span>
+          {/* NEXT CLASS SPOTLIGHT HERO CARD */}
+          {nextClass && (
+            <div className="next-class-spotlight">
+              <div className="next-class-top">
+                <div className="next-badge-group">
+                  <span className="next-badge">
+                    <Sparkles size={12} />
+                    {nextClass.badge || "Next class"}
+                  </span>
+                  <span className="next-countdown">
+                    <Clock size={11} />
+                    {nextClass.countdown || "Starting soon"}
+                  </span>
+                </div>
+                <span className="next-time-pill">{nextClass.time}</span>
+              </div>
+
+              <div className="next-class-main">
+                <h3 className="next-subject">{nextClass.subject}</h3>
+                <div className="next-meta-row">
+                  <span className="next-meta-item">
+                    <MapPin size={13} />
+                    <strong>{nextClass.room}</strong>
+                  </span>
+                  <span className="meta-separator">•</span>
+                  <span className="next-meta-item">
+                    <BookOpen size={13} />
+                    <span>{nextClass.faculty}</span>
+                  </span>
+                  {nextClass.timeWindow && (
+                    <>
+                      <span className="meta-separator">•</span>
+                      <span className="next-meta-item">
+                        <Clock size={13} />
+                        <span>{nextClass.timeWindow}</span>
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
-            <span className="class-tag">Completed</span>
+          )}
+
+          {/* TODAY'S TIMETABLE LIST */}
+          <div className="my-day-timeline-section">
+            <div className="timeline-section-header">
+              <h3>Today's Classes</h3>
+              <span className="classes-count-badge">
+                {todaySchedule.length} classes
+              </span>
+            </div>
+
+            <div className="schedule-list">
+              {todaySchedule.map((item) => (
+                <div
+                  key={item.id}
+                  className={`schedule-item ${
+                    item.isNext ? "highlight-next" : ""
+                  } ${item.status === "completed" ? "completed-item" : ""}`}
+                >
+                  <div className="time">{item.time}</div>
+                  <div className={`class-color ${item.color}`} />
+                  <div className="class-details">
+                    <strong>{item.subject}</strong>
+                    <span>
+                      {item.room} · {item.faculty}
+                    </span>
+                  </div>
+                  <span
+                    className={`class-tag ${
+                      item.status === "completed"
+                        ? "completed"
+                        : item.status === "upcoming"
+                        ? "upcoming"
+                        : ""
+                    }`}
+                  >
+                    {item.status === "completed" && (
+                      <CheckCircle size={12} className="tag-icon" />
+                    )}
+                    {item.statusLabel}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="schedule-item">
-            <div className="time">11:00 AM</div>
-            <div className="class-color purple" />
-            <div className="class-details">
-              <strong>Database Management</strong>
-              <span>Lab 3 · Prof. Patil</span>
+          {/* TODAY'S REMINDERS & NOTICES SECTION */}
+          <div className="my-day-reminders">
+            <div className="reminders-section-header">
+              <div>
+                <h3>Campus Reminders</h3>
+                <p className="reminders-sub">Important updates for today</p>
+              </div>
             </div>
-            <span className="class-tag upcoming">Upcoming</span>
-          </div>
 
-          <div className="schedule-item">
-            <div className="time">01:30 PM</div>
-            <div className="class-color orange" />
-            <div className="class-details">
-              <strong>Operating Systems</strong>
-              <span>Room 108 · Prof. Deshmukh</span>
-            </div>
-            <span className="class-tag">Later</span>
-          </div>
+            <div className="reminders-grid">
+              {/* Fee Reminder */}
+              <div className="reminder-card fee-card">
+                <div className="reminder-header-row">
+                  <div className="reminder-icon-box fee">
+                    <CreditCard size={15} />
+                  </div>
+                  <span
+                    className={`reminder-status-pill ${
+                      paymentMessage ? "paid" : "pending"
+                    }`}
+                  >
+                    {paymentMessage ? "Paid" : "Due Soon"}
+                  </span>
+                </div>
+                <div className="reminder-body">
+                  <strong>
+                    {paymentMessage
+                      ? "Fees Cleared"
+                      : `Fee Due: ₹${totalPendingFee.toLocaleString("en-IN")}`}
+                  </strong>
+                  <p>
+                    {paymentMessage
+                      ? "All semester dues paid successfully. Receipt available."
+                      : "Tuition and library charges pending payment."}
+                  </p>
+                </div>
+                <button
+                  className="reminder-link-btn"
+                  onClick={() => setActivePage("Fees")}
+                >
+                  <span>{paymentMessage ? "View History" : "Pay now"}</span>
+                  <ArrowRight size={13} />
+                </button>
+              </div>
 
-          <div className="schedule-item">
-            <div className="time">03:00 PM</div>
-            <div className="class-color green" />
-            <div className="class-details">
-              <strong>Web Development</strong>
-              <span>Lab 2 · Prof. Kulkarni</span>
+              {/* Event Reminder */}
+              <div className="reminder-card event-card-reminder">
+                <div className="reminder-header-row">
+                  <div className="reminder-icon-box event">
+                    <CalendarDays size={15} />
+                  </div>
+                  <span className="reminder-status-pill event">
+                    {eventsData[0].category}
+                  </span>
+                </div>
+                <div className="reminder-body">
+                  <strong>{eventsData[0].title}</strong>
+                  <p>
+                    📅 {eventsData[0].date} · {eventsData[0].location}
+                  </p>
+                </div>
+                <button
+                  className="reminder-link-btn"
+                  onClick={() => setActivePage("Events")}
+                >
+                  <span>Explore event</span>
+                  <ArrowRight size={13} />
+                </button>
+              </div>
             </div>
-            <span className="class-tag">Later</span>
           </div>
         </section>
 
@@ -565,6 +985,441 @@ function HomePage({ setActivePage }) {
   );
 }
 
+/* =========================================
+   CAMPUSCONNECT ASSISTANT (CHATBOT PROTOTYPE)
+========================================= */
+const suggestedQuestions = [
+  "What is my attendance?",
+  "How much fee is pending?",
+  "What is my next class?",
+  "What upcoming events are available?",
+];
+
+const initialAssistantMessage = {
+  id: "welcome-msg",
+  sender: "assistant",
+  text: "Hello Student! 👋 I'm your CampusConnect Assistant. How can I help you today? You can ask me about your attendance, fee dues, class schedule, or campus events.",
+  showSuggestions: true,
+};
+
+function CampusAssistant({
+  attendanceData,
+  feeItems,
+  paymentMessage,
+  todaySchedule,
+  eventsData,
+  registeredEvents,
+  setActivePage,
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [inputMessage, setInputMessage] = useState("");
+  const [messages, setMessages] = useState([initialAssistantMessage]);
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      inputRef.current?.focus();
+    }
+  }, [isOpen, messages, isTyping]);
+
+  const handleResetChat = () => {
+    setMessages([
+      {
+        id: `reset-${Date.now()}`,
+        sender: "assistant",
+        text: "Conversation reset! 👋 How can I help you today?",
+        showSuggestions: true,
+      },
+    ]);
+    setIsTyping(false);
+  };
+
+  const getResponseForQuery = (queryText) => {
+    const q = queryText.toLowerCase().trim();
+
+    // 1. ATTENDANCE QUERY
+    if (
+      q.includes("attendance") ||
+      q.includes("absent") ||
+      q.includes("present") ||
+      q.includes("bunk") ||
+      q.includes("percentage")
+    ) {
+      const totalAttended = attendanceData.reduce((s, x) => s + x.attended, 0);
+      const totalClasses = attendanceData.reduce((s, x) => s + x.total, 0);
+      const overallPct = Math.round((totalAttended / totalClasses) * 100);
+      const atRisk = attendanceData.filter(
+        (x) => Math.round((x.attended / x.total) * 100) < 75
+      );
+
+      let text = `📊 **Your overall attendance is ${overallPct}%** (${totalAttended} of ${totalClasses} classes attended).\n\n`;
+      if (overallPct >= 75) {
+        text += `✅ **Status: Safe** (Above the mandatory 75% requirement).\n`;
+      } else {
+        text += `⚠️ **Status: At Risk** (Below the mandatory 75% requirement).\n`;
+      }
+
+      if (atRisk.length > 0) {
+        text += `\n⚠️ **Subject needing attention:**\n`;
+        atRisk.forEach((subj) => {
+          const pct = Math.round((subj.attended / subj.total) * 100);
+          text += `• **${subj.subject}**: ${pct}% (${subj.attended}/${subj.total})\n`;
+        });
+      } else {
+        text += `\n🎉 Fantastic! All individual subjects are at or above 75%.`;
+      }
+
+      return {
+        text,
+        action: {
+          label: "View Attendance Screen →",
+          page: "Attendance",
+        },
+      };
+    }
+
+    // 2. FEES QUERY
+    if (
+      q.includes("fee") ||
+      q.includes("dues") ||
+      q.includes("due") ||
+      q.includes("pending") ||
+      q.includes("tuition") ||
+      q.includes("payment") ||
+      q.includes("pay")
+    ) {
+      const totalPending = feeItems.reduce((s, x) => s + x.amount, 0);
+
+      if (paymentMessage) {
+        return {
+          text: `💳 **Fee Status: Cleared!**\n\nAll semester college fees have been paid in full. There are no pending dues on your account.\n\nReceipt Reference: Verified demo transaction.`,
+          action: {
+            label: "View Fee Receipt →",
+            page: "Fees",
+          },
+        };
+      }
+
+      let text = `💳 **Pending Fee: ₹${totalPending.toLocaleString(
+        "en-IN"
+      )}**\n\nBreakdown of current charges:\n`;
+      feeItems.forEach((f) => {
+        text += `• ${f.name}: ₹${f.amount.toLocaleString("en-IN")}\n`;
+      });
+      text += `\nPlease clear these dues before the semester cutoff.`;
+
+      return {
+        text,
+        action: {
+          label: "Pay Fees Now →",
+          page: "Fees",
+        },
+      };
+    }
+
+    // 3. SCHEDULE / CLASS QUERY
+    if (
+      q.includes("class") ||
+      q.includes("next") ||
+      q.includes("schedule") ||
+      q.includes("timetable") ||
+      q.includes("today") ||
+      q.includes("lecture") ||
+      q.includes("timing")
+    ) {
+      const nextClass =
+        todaySchedule.find((c) => c.isNext) ||
+        todaySchedule.find((c) => c.status === "upcoming") ||
+        todaySchedule[0];
+
+      let text = `🕒 **Your Next Class:**\n**${nextClass.subject}** at **${nextClass.time}**\n📍 Room: ${nextClass.room} · 👨‍🏫 ${nextClass.faculty}\n⏳ Status: ${
+        nextClass.countdown || "Starting soon"
+      }\n\n`;
+      text += `📅 **Today's Schedule (${todaySchedule.length} classes):**\n`;
+      todaySchedule.forEach((c) => {
+        const tag =
+          c.status === "completed"
+            ? "✅ Completed"
+            : c.status === "upcoming"
+            ? "⏳ Up Next"
+            : "📌 Later";
+        text += `• ${c.time} – ${c.subject} (${c.room}) [${tag}]\n`;
+      });
+
+      return {
+        text,
+        action: {
+          label: "View Full Timetable →",
+          page: "Attendance",
+        },
+      };
+    }
+
+    // 4. EVENTS QUERY
+    if (
+      q.includes("event") ||
+      q.includes("hackathon") ||
+      q.includes("fest") ||
+      q.includes("tournament") ||
+      q.includes("cultural") ||
+      q.includes("sports")
+    ) {
+      let text = `🎉 **Upcoming Campus Events (${eventsData.length} total):**\n\n`;
+      eventsData.forEach((ev, i) => {
+        const isReg = registeredEvents.includes(ev.id);
+        text += `${i + 1}. **${ev.title}** (${ev.category})\n`;
+        text += `   📅 ${ev.date} · ${ev.time}\n`;
+        text += `   📍 ${ev.location}\n`;
+        text += `   ${
+          isReg ? "✅ You are registered!" : "🎫 Open for registration"
+        }\n\n`;
+      });
+
+      return {
+        text: text.trim(),
+        action: {
+          label: "Explore Events Screen →",
+          page: "Events",
+        },
+      };
+    }
+
+    // 5. GREETING
+    if (
+      q.includes("hi") ||
+      q.includes("hello") ||
+      q.includes("hey") ||
+      q.includes("help") ||
+      q === ""
+    ) {
+      return {
+        text: `Hello! 👋 I'm here to help. You can quickly ask me:\n• "What is my attendance?"\n• "How much fee is pending?"\n• "What is my next class?"\n• "What upcoming events are available?"`,
+        showSuggestions: true,
+      };
+    }
+
+    // 6. HELPFUL FALLBACK
+    return {
+      text: `I'm your CampusConnect Assistant prototype. I can answer questions about your **attendance**, **fee status**, **today's class schedule**, and **campus events**.\n\nTry clicking one of the suggested questions below!`,
+      showSuggestions: true,
+    };
+  };
+
+  const handleSend = (textToSend) => {
+    const query = typeof textToSend === "string" ? textToSend : inputMessage;
+    if (!query.trim() || isTyping) return;
+
+    const userMsg = {
+      id: `user-${Date.now()}`,
+      sender: "user",
+      text: query.trim(),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setInputMessage("");
+    setIsTyping(true);
+
+    // Realistic brief typing delay (500ms)
+    setTimeout(() => {
+      const response = getResponseForQuery(query);
+      const assistantMsg = {
+        id: `bot-${Date.now()}`,
+        sender: "assistant",
+        text: response.text,
+        action: response.action,
+        showSuggestions: response.showSuggestions,
+      };
+
+      setMessages((prev) => [...prev, assistantMsg]);
+      setIsTyping(false);
+    }, 500);
+  };
+
+  const renderMessageContent = (text) => {
+    return text.split("\n").map((line, idx, arr) => {
+      const parts = line.split(/(\*\*.*?\*\*)/g);
+      return (
+        <span key={idx} className="chat-line">
+          {parts.map((part, pIdx) => {
+            if (part.startsWith("**") && part.endsWith("**")) {
+              return <strong key={pIdx}>{part.slice(2, -2)}</strong>;
+            }
+            return part;
+          })}
+          {idx < arr.length - 1 && <br />}
+        </span>
+      );
+    });
+  };
+
+  return (
+    <div className="campus-assistant-root">
+      {/* CHAT PANEL POPUP */}
+      {isOpen && (
+        <div className="assistant-chat-panel">
+          {/* HEADER */}
+          <div className="assistant-panel-header">
+            <div className="assistant-header-info">
+              <div className="assistant-avatar">
+                <Bot size={18} />
+                <span className="assistant-status-dot" />
+              </div>
+              <div className="assistant-title-group">
+                <h3>CampusConnect Assistant</h3>
+                <span>Student Info Bot · Prototype</span>
+              </div>
+            </div>
+            <div className="assistant-header-actions">
+              <button
+                className="assistant-header-btn"
+                onClick={handleResetChat}
+                title="Reset conversation"
+                aria-label="Reset conversation"
+              >
+                <RotateCcw size={15} />
+              </button>
+              <button
+                className="assistant-header-btn close-btn"
+                onClick={() => setIsOpen(false)}
+                title="Close assistant"
+                aria-label="Close assistant"
+              >
+                <X size={17} />
+              </button>
+            </div>
+          </div>
+
+          {/* CHAT MESSAGES BODY */}
+          <div className="assistant-chat-body">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`chat-message-row ${
+                  msg.sender === "user" ? "user-row" : "bot-row"
+                }`}
+              >
+                {msg.sender === "assistant" && (
+                  <div className="bot-msg-avatar">
+                    <Bot size={14} />
+                  </div>
+                )}
+                <div className={`chat-bubble ${msg.sender}`}>
+                  <div className="chat-bubble-content">
+                    {renderMessageContent(msg.text)}
+                  </div>
+
+                  {/* ONE-CLICK DIRECT APP NAVIGATION SHORTCUT */}
+                  {msg.action && (
+                    <button
+                      className="chat-action-btn"
+                      onClick={() => {
+                        setActivePage(msg.action.page);
+                      }}
+                    >
+                      <span>{msg.action.label}</span>
+                    </button>
+                  )}
+
+                  {/* CLICKABLE SUGGESTED QUESTIONS */}
+                  {msg.showSuggestions && (
+                    <div className="suggested-questions-box">
+                      <p className="suggested-title">Suggested questions:</p>
+                      <div className="suggested-chips">
+                        {suggestedQuestions.map((qText, qIdx) => (
+                          <button
+                            key={qIdx}
+                            className="suggested-chip"
+                            onClick={() => handleSend(qText)}
+                          >
+                            {qText}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* TYPING INDICATOR */}
+            {isTyping && (
+              <div className="chat-message-row bot-row">
+                <div className="bot-msg-avatar">
+                  <Bot size={14} />
+                </div>
+                <div className="chat-bubble assistant typing-bubble">
+                  <div className="typing-dots">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* INPUT FORM */}
+          <form
+            className="assistant-chat-footer"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSend();
+            }}
+          >
+            <div className="assistant-input-box">
+              <input
+                ref={inputRef}
+                type="text"
+                className="assistant-input"
+                placeholder="Ask about attendance, fees, timetable..."
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="assistant-send-btn"
+                disabled={!inputMessage.trim() || isTyping}
+                aria-label="Send message"
+              >
+                <Send size={15} />
+              </button>
+            </div>
+            <p className="assistant-disclaimer">
+              Prototype assistant · Answers based on live student portal data
+            </p>
+          </form>
+        </div>
+      )}
+
+      {/* FLOATING ACTION BUTTON */}
+      <button
+        className={`assistant-floating-btn ${isOpen ? "active" : ""}`}
+        onClick={() => setIsOpen((prev) => !prev)}
+        aria-label={
+          isOpen ? "Close Campus Assistant" : "Open Campus Assistant"
+        }
+        title={isOpen ? "Close Campus Assistant" : "Open Campus Assistant"}
+      >
+        {isOpen ? (
+          <X size={22} />
+        ) : (
+          <>
+            <Bot size={24} />
+            <span className="assistant-btn-pulse" />
+            <span className="assistant-btn-sparkle">
+              <Sparkles size={11} />
+            </span>
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+
 /* =========================
    MAIN APP
 ========================= */
@@ -603,7 +1458,12 @@ function App() {
           />
         );
       default:
-        return <HomePage setActivePage={setActivePage} />;
+        return (
+          <HomePage
+            setActivePage={setActivePage}
+            paymentMessage={paymentMessage}
+          />
+        );
     }
   };
 
@@ -763,6 +1623,17 @@ function App() {
 
         {renderPage()}
       </main>
+
+      {/* CAMPUSCONNECT ASSISTANT */}
+      <CampusAssistant
+        attendanceData={attendanceData}
+        feeItems={feeItems}
+        paymentMessage={paymentMessage}
+        todaySchedule={todaySchedule}
+        eventsData={eventsData}
+        registeredEvents={registeredEvents}
+        setActivePage={setActivePage}
+      />
     </div>
   );
 }
