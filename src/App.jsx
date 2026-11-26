@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import nehaPhoto from "./assets/neha.png";
 import arjunPhoto from "./assets/arjun.jpg.png";
+import rahulPhoto from "./assets/rahul.png";
 import {
   Home,
   CalendarDays,
@@ -751,30 +752,53 @@ className="community-avatar"
 }
 
 function ProfilePage({ setActivePage }) {
-  return (
-    <div className="page-section">
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow-dark">STUDENT ACCOUNT</span>
-          <h1>My Profile</h1>
-          <p>Manage your student portal.</p>
-        </div>
-      </div>
+return (
+<div className="profile-screen">
 
-      <div className="panel profile-page-card">
-        <div className="avatar profile-large-avatar">S</div>
-        <h2>Student</h2>
-        <p>Computer Engineering</p>
+<div className="profile-hero">
+<img src={rahulPhoto} alt="Rahul Sharma" />
+<h1>Rahul Sharma</h1>
+<p>B.Tech · CSE · 2nd Year</p>
+</div>
 
-        <button
-          className="join-button"
-          onClick={() => setActivePage("Fees")}
-        >
-          View Fees & Payments
-        </button>
-      </div>
-    </div>
-  );
+<div className="profile-stats">
+<div><strong>12</strong><span>Events</span></div>
+<div><strong>8</strong><span>Posts</span></div>
+<div><strong>92%</strong><span>Attendance</span></div>
+</div>
+
+<div className="profile-menu">
+
+{[
+["👤", "My Profile"],
+["📋", "My Notes"],
+["🔖", "My Bookmarks"],
+["⚙️", "Settings"],
+["❔", "Help & Support"],
+["🚪", "Logout"],
+].map(([icon, label]) => (
+<button
+className="profile-menu-item"
+key={label}
+onClick={() => {
+if (label === "Logout") {
+alert("Logout functionality coming soon!");
+}
+}}
+>
+<span>{icon} {label}</span>
+<span>›</span>
+</button>
+))}
+
+</div>
+
+<div className="profile-campus-decoration">
+🎓 🏫 🎓
+</div>
+
+</div>
+);
 }
 
 /* =========================
