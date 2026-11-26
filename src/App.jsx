@@ -1,5 +1,7 @@
 
 import { useState, useRef, useEffect } from "react";
+import nehaPhoto from "./assets/neha.png";
+import arjunPhoto from "./assets/arjun.jpg.png";
 import {
   Home,
   CalendarDays,
@@ -583,9 +585,23 @@ function CommunityPage() {
             <div className="discussion-card" key={post.id}>
 
               <div className="discussion-user">
-                <div className="community-avatar">
-                  {post.name.charAt(0)}
-                </div>
+                {post.name === "Neha Sharma" ? (
+<img
+src={nehaPhoto}
+alt="Neha Sharma"
+className="community-avatar"
+/>
+) : post.name === "Arjun Mehta" ? (
+<img
+src={arjunPhoto}
+alt="Arjun Mehta"
+className="community-avatar"
+/>
+) : (
+<div className="community-avatar">
+{post.name.charAt(0)}
+</div>
+)}
 
                 <div>
                   <h3>{post.name}</h3>
