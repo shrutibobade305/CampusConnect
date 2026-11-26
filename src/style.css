@@ -3423,6 +3423,8 @@ footer {
   color: #4b20c7;
   font-weight: 800;
   font-size: 17px;
+  object-fit: cover;
+  overflow:hidden;
 }
 
 .discussion-user h3 {
