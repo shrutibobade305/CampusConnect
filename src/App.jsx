@@ -22,6 +22,10 @@ import {
   X,
   RotateCcw,
   Bot,
+  Users,
+  ThumbsUp,
+  Plus,
+  UserRound,
 } from "lucide-react";
 
 /* =========================
@@ -139,8 +143,9 @@ const todaySchedule = [
 const navItems = [
   { name: "Home", icon: Home },
   { name: "Academics", icon: GraduationCap },
-  { name: "Fees", icon: CreditCard },
+  { name: "Community", icon: Users },
   { name: "Events", icon: CalendarDays },
+  { name: "Profile", icon: UserRound },
 ];
 
 /* =========================
@@ -418,6 +423,339 @@ function EventsPage({ registeredEvents, toggleRegistration }) {
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+/* =========================
+   STUDENT COMMUNITY
+========================= */
+
+function CommunityPage() {
+  const [activeTab, setActiveTab] = useState("Discussions");
+  const [search, setSearch] = useState("");
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [newPost, setNewPost] = useState("");
+
+  const [posts, setPosts] = useState([
+    {
+      id: 1,
+      name: "Neha Sharma",
+      department: "CSE",
+      time: "2h ago",
+      message: "Can anyone share the Data Structures notes?",
+      likes: 24,
+      comments: 12,
+      liked: false,
+    },
+    {
+      id: 2,
+      name: "Arjun Mehta",
+      department: "ECE",
+      time: "3h ago",
+      message: "Best resources for placement preparation?",
+      likes: 18,
+      comments: 8,
+      liked: false,
+    },
+  ]);
+
+  const [joinedGroups, setJoinedGroups] = useState([]);
+
+  const groups = [
+    {
+      id: 1,
+      name: "Coding Club",
+      description: "Learn programming and participate in coding challenges.",
+      members: "120 members",
+    },
+    {
+      id: 2,
+      name: "Tech Innovators",
+      description: "Share ideas, projects and innovative solutions.",
+      members: "85 members",
+    },
+    {
+      id: 3,
+      name: "Placement Preparation",
+      description: "Prepare together for interviews and placements.",
+      members: "200 members",
+    },
+  ];
+
+  const polls = [
+    {
+      id: 1,
+      question: "Which event would you like next?",
+      options: ["Hackathon", "Tech Fest", "Sports Day"],
+    },
+    {
+      id: 2,
+      question: "Which programming language do you prefer?",
+      options: ["Python", "Java", "C++"],
+    },
+  ];
+
+  const toggleLike = (id) => {
+    setPosts((previous) =>
+      previous.map((post) =>
+        post.id === id
+          ? {
+              ...post,
+              liked: !post.liked,
+              likes: post.liked
+                ? post.likes - 1
+                : post.likes + 1,
+            }
+          : post
+      )
+    );
+  };
+
+  const createPost = () => {
+    if (!newPost.trim()) return;
+
+    const post = {
+      id: Date.now(),
+      name: "Student",
+      department: "CSE",
+      time: "Just now",
+      message: newPost,
+      likes: 0,
+      comments: 0,
+      liked: false,
+    };
+
+    setPosts((previous) => [post, ...previous]);
+    setNewPost("");
+    setShowCreatePost(false);
+    setActiveTab("Discussions");
+  };
+
+  const toggleJoin = (id) => {
+    setJoinedGroups((previous) =>
+      previous.includes(id)
+        ? previous.filter((groupId) => groupId !== id)
+        : [...previous, id]
+    );
+  };
+
+  const filteredPosts = posts.filter((post) =>
+    `${post.name} ${post.message} ${post.department}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="community-page">
+
+      <div className="community-heading">
+        <h1>Student Community</h1>
+
+        <div className="community-search">
+          <Search size={21} />
+          <input
+            type="text"
+            placeholder="Search community..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="community-tabs">
+        {["Discussions", "Groups", "Polls"].map((tab) => (
+          <button
+            key={tab}
+            className={activeTab === tab ? "active" : ""}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "Discussions" && (
+        <div className="discussion-list">
+
+          {filteredPosts.map((post) => (
+            <div className="discussion-card" key={post.id}>
+
+              <div className="discussion-user">
+                <div className="community-avatar">
+                  {post.name.charAt(0)}
+                </div>
+
+                <div>
+                  <h3>{post.name}</h3>
+                  <p>{post.department} · {post.time}</p>
+                </div>
+              </div>
+
+              <p className="discussion-message">
+                {post.message}
+              </p>
+
+              <div className="discussion-actions">
+
+                <button
+                  className={post.liked ? "liked" : ""}
+                  onClick={() => toggleLike(post.id)}
+                >
+                  <ThumbsUp size={19} />
+                  {post.likes}
+                </button>
+
+                <button>
+                  <MessageSquare size={19} />
+                  {post.comments}
+                </button>
+
+                <span className="discussion-spacer" />
+
+                <button
+                  className="join-button"
+                  onClick={() =>
+                    alert("You joined the discussion!")
+                  }
+                >
+                  Join
+                </button>
+
+              </div>
+            </div>
+          ))}
+
+          {filteredPosts.length === 0 && (
+            <p className="community-empty">
+              No discussions found.
+            </p>
+          )}
+
+        </div>
+      )}
+
+      {activeTab === "Groups" && (
+        <div className="community-groups">
+
+          {groups.map((group) => {
+            const joined = joinedGroups.includes(group.id);
+
+            return (
+              <div className="community-group-card" key={group.id}>
+                <div className="group-icon">
+                  <Users size={23} />
+                </div>
+
+                <h3>{group.name}</h3>
+                <p>{group.description}</p>
+                <span>{group.members}</span>
+
+                <button
+                  className={`join-button ${joined ? "joined" : ""}`}
+                  onClick={() => toggleJoin(group.id)}
+                >
+                  {joined ? "Joined ✓" : "Join Group"}
+                </button>
+              </div>
+            );
+          })}
+
+        </div>
+      )}
+
+      {activeTab === "Polls" && (
+        <div className="community-polls">
+
+          {polls.map((poll) => (
+            <div className="community-poll-card" key={poll.id}>
+              <h3>{poll.question}</h3>
+
+              {poll.options.map((option) => (
+                <button
+                  className="poll-option"
+                  key={option}
+                  onClick={(e) => {
+                    e.currentTarget.classList.toggle("selected");
+                  }}
+                >
+                  {option}
+                </button>
+              ))}
+
+            </div>
+          ))}
+
+        </div>
+      )}
+
+      <button
+        className="create-post-button"
+        onClick={() => setShowCreatePost(true)}
+      >
+        <Plus size={22} />
+        Create Post
+      </button>
+
+      {showCreatePost && (
+        <div className="post-modal-overlay">
+
+          <div className="post-modal">
+
+            <div className="post-modal-header">
+              <h2>Create Post</h2>
+
+              <button
+                onClick={() => setShowCreatePost(false)}
+              >
+                <X size={21} />
+              </button>
+            </div>
+
+            <textarea
+              placeholder="Share something with your campus..."
+              value={newPost}
+              onChange={(e) => setNewPost(e.target.value)}
+            />
+
+            <button
+              className="publish-post-button"
+              onClick={createPost}
+            >
+              Publish Post
+            </button>
+
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+function ProfilePage({ setActivePage }) {
+  return (
+    <div className="page-section">
+      <div className="page-heading">
+        <div>
+          <span className="eyebrow-dark">STUDENT ACCOUNT</span>
+          <h1>My Profile</h1>
+          <p>Manage your student portal.</p>
+        </div>
+      </div>
+
+      <div className="panel profile-page-card">
+        <div className="avatar profile-large-avatar">S</div>
+        <h2>Student</h2>
+        <p>Computer Engineering</p>
+
+        <button
+          className="join-button"
+          onClick={() => setActivePage("Fees")}
+        >
+          View Fees & Payments
+        </button>
       </div>
     </div>
   );
@@ -1466,6 +1804,12 @@ function App() {
             toggleRegistration={toggleRegistration}
           />
         );
+      case "Community":
+  return <CommunityPage />;
+
+case "Profile":
+  return <ProfilePage setActivePage={setActivePage} />;
+
       default:
         return (
           <HomePage
