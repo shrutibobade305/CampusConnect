@@ -138,7 +138,7 @@ const todaySchedule = [
 ========================= */
 const navItems = [
   { name: "Home", icon: Home },
-  { name: "Attendance", icon: ClipboardCheck },
+  { name: "Academics", icon: GraduationCap },
   { name: "Fees", icon: CreditCard },
   { name: "Events", icon: CalendarDays },
 ];
@@ -166,7 +166,7 @@ function AttendancePage() {
       <div className="page-heading">
         <div>
           <span className="eyebrow-dark">ACADEMIC OVERVIEW</span>
-          <h1>Attendance</h1>
+          <h1>Academics</h1>
           <p>Track your attendance across all subjects.</p>
         </div>
       </div>
@@ -634,7 +634,7 @@ function SmartAttendanceInsights({ setActivePage }) {
       <div className="insights-footer">
         <button
           className="insights-view-link"
-          onClick={() => setActivePage("Attendance")}
+          onClick={() => setActivePage("Academics")}
         >
           <span>View full attendance records</span>
           <ArrowRight size={14} />
@@ -720,7 +720,7 @@ const greeting =
           </div>
           <button
             className="card-link"
-            onClick={() => setActivePage("Attendance")}
+            onClick={() => setActivePage("Academics")}
           >
             View attendance →
           </button>
@@ -774,7 +774,7 @@ const greeting =
             </div>
             <button
               className="timetable-link"
-              onClick={() => setActivePage("Attendance")}
+              onClick={() => setActivePage("Academics")}
             >
               <span>View full timetable</span>
               <ArrowRight size={14} className="timetable-arrow" />
@@ -1085,7 +1085,7 @@ function CampusAssistant({
         text,
         action: {
           label: "View Attendance Screen →",
-          page: "Attendance",
+          page: "Academics",
         },
       };
     }
@@ -1450,7 +1450,7 @@ function App() {
 
   const renderPage = () => {
     switch (activePage) {
-      case "Attendance":
+      case "Academics":
         return <AttendancePage />;
       case "Fees":
         return (
