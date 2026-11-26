@@ -3815,3 +3815,22 @@ padding: 25px;
 font-size: 35px;
 background: linear-gradient(to top, #e9ddff, white);
 }
+
+/* FIX PROFILE PHOTO SIZE */
+.profile-screen .profile-hero {
+background: linear-gradient(135deg, #5425e8, #8b5cf6) !important;
+text-align: center !important;
+padding: 45px 20px 75px !important;
+color: white !important;
+}
+
+.profile-screen .profile-hero img {
+display: block !important;
+width: 130px !important;
+height: 130px !important;
+max-width: 130px !important;
+border-radius: 50% !important;
+object-fit: cover !important;
+margin: 0 auto 12px !important;
+position: static !important;
+}
