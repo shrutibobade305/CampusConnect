@@ -764,7 +764,7 @@ return (
 <div className="profile-stats">
 <div><strong>12</strong><span>Events</span></div>
 <div><strong>8</strong><span>Posts</span></div>
-<div><strong>92%</strong><span>Attendance</span></div>
+<div><strong>85%</strong><span>Attendance</span></div>
 </div>
 
 <div className="profile-menu">
