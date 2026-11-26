@@ -666,7 +666,16 @@ function HomePage({ setActivePage, paymentMessage }) {
     (sum, fee) => sum + fee.amount,
     0
   );
+  // Dynamic greeting
+const currentHour = new Date().getHours();
 
+const greeting =
+  currentHour < 12
+    ? "Good morning"
+    : currentHour < 17
+    ? "Good afternoon"
+    : "Good evening";
+  
   // Dynamic date formatting for My Day
   const todayFormatted = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -686,7 +695,7 @@ function HomePage({ setActivePage, paymentMessage }) {
       <div className="welcome">
         <div className="welcome-content">
           <p className="eyebrow">YOUR STUDENT PORTAL</p>
-          <h1>Good morning, Student! 👋</h1>
+          <h1>{greeting}, Student! 👋</h1>
           <p>Here's what's happening on your campus today.</p>
         </div>
         <div className="welcome-decoration">🎓</div>
